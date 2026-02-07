@@ -16,6 +16,7 @@ const links = [
 export default function Sidebar() {
   const pathname = usePathname();
   const logout = useAuth((s) => s.logout);
+  const email = useAuth((s) => s.email);
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-[220px] flex flex-col border-r border-[var(--border)] bg-[var(--bg-secondary)] z-50">
@@ -52,8 +53,13 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="p-3 border-t border-[var(--border)]">
+      {/* User + Logout */}
+      <div className="p-3 border-t border-[var(--border)] space-y-1">
+        {email && (
+          <div className="px-3 py-1.5 text-xs text-[var(--text-muted)] truncate" title={email}>
+            {email}
+          </div>
+        )}
         <button
           onClick={() => { logout(); window.location.href = "/auth/login"; }}
           className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/5 transition-colors"

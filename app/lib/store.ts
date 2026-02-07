@@ -7,10 +7,8 @@ interface AuthState {
   userId: string | null;
   email: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
-  logout: () => void;
   hydrate: () => void;
+  logout: () => void;
 }
 
 export const useAuth = create<AuthState>((set) => ({
@@ -19,32 +17,27 @@ export const useAuth = create<AuthState>((set) => ({
   email: null,
   isAuthenticated: false,
 
-  login: async (email, password) => {
-    const res = await api.login(email, password);
-    api.setToken(res.access_token);
-    set({ token: res.access_token, userId: res.user_id, email: res.email, isAuthenticated: true });
-  },
-
-  register: async (email, password, name) => {
-    const res = await api.register(email, password, name);
-    api.setToken(res.access_token);
-    set({ token: res.access_token, userId: res.user_id, email: res.email, isAuthenticated: true });
-  },
-
-  logout: () => {
-    api.setToken(null);
-    set({ token: null, userId: null, email: null, isAuthenticated: false });
-  },
-
   hydrate: () => {
     const token = api.getToken();
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split(".")[1]));
+        // Check expiry
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+          api.setToken(null);
+          set({ token: null, userId: null, email: null, isAuthenticated: false });
+          return;
+        }
         set({ token, userId: payload.sub, email: payload.email, isAuthenticated: true });
       } catch {
         api.setToken(null);
+        set({ token: null, userId: null, email: null, isAuthenticated: false });
       }
     }
+  },
+
+  logout: () => {
+    api.setToken(null);
+    set({ token: null, userId: null, email: null, isAuthenticated: false });
   },
 }));
