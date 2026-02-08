@@ -170,7 +170,7 @@ export default function JobsPage() {
                 </div>
                 <div>
                   <span className="text-[var(--text-muted)] text-xs">Type</span>
-                  <p>{selected.job_type}</p>
+                  <p>{selected.job_type}{selected.recurrence && selected.recurrence !== "ONCE" ? ` (${selected.recurrence})` : ""}</p>
                 </div>
                 <div>
                   <span className="text-[var(--text-muted)] text-xs">Status</span>

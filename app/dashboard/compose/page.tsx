@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Clock, Repeat, ArrowRight, Check, Sparkles } from "lucide-react";
+import { Send, Clock, Repeat, ArrowRight, Check, Sparkles, CalendarDays, CalendarClock } from "lucide-react";
 import { api } from "@/app/lib/api";
 
 const JOB_TYPES = [
@@ -31,6 +31,7 @@ export default function ComposePage() {
   const [bodyHtml, setBodyHtml] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [timezone, setTimezone] = useState("Asia/Kolkata");
+  const [recurrence, setRecurrence] = useState<"ONCE" | "DAILY" | "WEEKLY">("ONCE");
   const [intervalMinutes, setIntervalMinutes] = useState(15);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -55,6 +56,7 @@ export default function ComposePage() {
         body_html: bodyHtml || undefined,
         schedule_time: jobType === "SEND_AT" ? scheduleTime : undefined,
         timezone: jobType === "SEND_AT" ? timezone : undefined,
+        recurrence: jobType === "SEND_AT" ? recurrence : undefined,
         interval_minutes: jobType === "INTERVAL" ? intervalMinutes : undefined,
       });
       setSuccess(true);
@@ -80,7 +82,7 @@ export default function ComposePage() {
           <h2 className="text-xl font-bold mb-2">Job Created!</h2>
           <p className="text-[var(--text-secondary)] text-sm">
             {jobType === "SEND_NOW" ? "Your email is being sent..." :
-             jobType === "SEND_AT" ? "Your email has been scheduled." :
+             jobType === "SEND_AT" ? (recurrence === "ONCE" ? "Your email has been scheduled." : `Your ${recurrence.toLowerCase()} schedule is active.`) :
              "Your recurring job is active."}
           </p>
         </motion.div>
@@ -195,9 +197,42 @@ export default function ComposePage() {
           >
             {jobType === "SEND_AT" && (
               <>
+                {/* Frequency selector */}
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Date & Time</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Frequency</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {([
+                      { value: "ONCE", label: "One-time", desc: "Send once", icon: Clock },
+                      { value: "DAILY", label: "Daily", desc: "Same time daily", icon: CalendarDays },
+                      { value: "WEEKLY", label: "Weekly", desc: "Same day & time", icon: CalendarClock },
+                    ] as const).map((opt) => {
+                      const Icon = opt.icon;
+                      const selected = recurrence === opt.value;
+                      return (
+                        <button key={opt.value} type="button" onClick={() => setRecurrence(opt.value)}
+                          className={`glass rounded-lg p-3 text-left transition-all ${
+                            selected ? "border-[var(--accent)] glow-sm" : "hover:border-[var(--border-hover)]"
+                          }`}
+                        >
+                          <Icon className={`w-4 h-4 mb-1.5 ${selected ? "text-[var(--accent)]" : "text-[var(--text-muted)]"}`} />
+                          <p className="text-xs font-medium">{opt.label}</p>
+                          <p className="text-[10px] text-[var(--text-muted)]">{opt.desc}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">
+                    {recurrence === "ONCE" ? "Date & Time" : recurrence === "DAILY" ? "Start Date & Time (repeats daily)" : "Start Date & Time (repeats weekly)"}
+                  </label>
                   <input type="datetime-local" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} />
+                  {recurrence === "DAILY" && (
+                    <p className="text-xs text-[var(--text-muted)] mt-1">Email will be sent every day at this time.</p>
+                  )}
+                  {recurrence === "WEEKLY" && (
+                    <p className="text-xs text-[var(--text-muted)] mt-1">Email will be sent every week on the same day at this time.</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Timezone</label>
@@ -229,7 +264,7 @@ export default function ComposePage() {
                 className="flex items-center gap-2 px-5 py-2 rounded-lg bg-gradient-to-r from-[#7c5cfc] to-[#9b7cfc] text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
               >
                 {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> :
-                  <>{jobType === "SEND_AT" ? "Schedule Email" : "Start Recurring"} <ArrowRight className="w-4 h-4" /></>
+                  <>{jobType === "SEND_AT" ? (recurrence === "ONCE" ? "Schedule Email" : `Start ${recurrence === "DAILY" ? "Daily" : "Weekly"} Schedule`) : "Start Recurring"} <ArrowRight className="w-4 h-4" /></>
                 }
               </motion.button>
             </div>

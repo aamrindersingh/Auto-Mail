@@ -89,6 +89,7 @@ class ApiClient {
     body_html?: string;
     schedule_time?: string;
     timezone?: string;
+    recurrence?: string;
     interval_minutes?: number;
   }) {
     return this.request<JobResponse>("/jobs", { method: "POST", body: JSON.stringify(data) });
@@ -133,6 +134,7 @@ export interface JobResponse {
   status: string;
   schedule_time_utc: string | null;
   schedule_timezone: string | null;
+  recurrence: string | null;
   interval_minutes: number | null;
   total_runs: number;
   successful_runs: number;
